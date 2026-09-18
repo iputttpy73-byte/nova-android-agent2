@@ -93,3 +93,43 @@ export type PlanStepRow = typeof planSteps.$inferSelect;
 export type InsertPlanStepRow = typeof planSteps.$inferInsert;
 export type ObservationRow = typeof observations.$inferSelect;
 export type InsertObservationRow = typeof observations.$inferInsert;
+
+export const agentRunEvents = mysqlTable("agent_run_events", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  runId: varchar("runId", { length: 128 }).notNull(),
+  sequence: int("sequence").notNull(),
+  type: varchar("type", { length: 64 }).notNull(),
+  fromState: varchar("fromState", { length: 64 }),
+  toState: varchar("toState", { length: 64 }),
+  actor: varchar("actor", { length: 32 }).notNull(),
+  reason: text("reason"),
+  payload: json("payload"),
+  createdAt: timestamp("createdAt").notNull(),
+}, (table) => ({ runSequenceIdx: index("agent_run_events_run_sequence_idx").on(table.runId, table.sequence) }));
+
+export const auditEvents = mysqlTable("audit_events", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  runId: varchar("runId", { length: 128 }),
+  actorId: varchar("actorId", { length: 128 }).notNull(),
+  action: varchar("action", { length: 128 }).notNull(),
+  outcome: mysqlEnum("outcome", ["SUCCESS", "DENIED", "FAILED"]).notNull(),
+  metadata: json("metadata"),
+  createdAt: timestamp("createdAt").notNull(),
+}, (table) => ({ runCreatedIdx: index("audit_events_run_created_idx").on(table.runId, table.createdAt), actorCreatedIdx: index("audit_events_actor_created_idx").on(table.actorId, table.createdAt) }));
+
+export const humanInterventionRequests = mysqlTable("human_intervention_requests", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  runId: varchar("runId", { length: 128 }).notNull(),
+  reason: text("reason").notNull(),
+  requestedAction: text("requestedAction").notNull(),
+  risk: mysqlEnum("risk", ["LOW", "MEDIUM", "HIGH", "CRITICAL"]).notNull(),
+  status: mysqlEnum("status", ["OPEN", "RESOLVED", "EXPIRED", "CANCELLED"]).notNull(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  resolution: text("resolution"),
+  createdAt: timestamp("createdAt").notNull(),
+  resolvedAt: timestamp("resolvedAt"),
+}, (table) => ({ runStatusIdx: index("interventions_run_status_idx").on(table.runId, table.status) }));
+
+export type AgentRunEventRow = typeof agentRunEvents.$inferSelect;
+export type AuditEventRow = typeof auditEvents.$inferSelect;
+export type HumanInterventionRequestRow = typeof humanInterventionRequests.$inferSelect;
