@@ -19,6 +19,7 @@ export interface PlanRepository {
   create(plan: Plan): Promise<Plan>;
   getById(id: PlanId): Promise<Plan | undefined>;
   listByRun(runId: AgentRunId): Promise<Plan[]>;
+  getLatestByRun(runId: AgentRunId): Promise<Plan | undefined>;
 }
 
 export interface AgentRunRepository {
@@ -75,6 +76,7 @@ export class InMemoryRepositories implements PersistenceRepositories {
       create: async (plan) => { validatePlan(plan); if (plans.has(plan.id)) throw new AgentDomainError("INVALID_PLAN", "Plan already exists."); plans.set(plan.id, clone(plan)); return clone(plan); },
       getById: async (id) => clone(plans.get(id)),
       listByRun: async (runId) => [...plans.values()].filter((plan) => plan.runId === runId).sort((a, b) => a.version - b.version).map(clone),
+      getLatestByRun: async (runId) => clone([...plans.values()].filter((plan) => plan.runId === runId).sort((a, b) => b.version - a.version)[0]),
     };
     this.agentRuns = {
       create: async (run) => { validateAgentRun(run); if (runs.has(run.id)) throw new AgentDomainError("INVALID_STATE_TRANSITION", "Agent run already exists."); runs.set(run.id, clone(run)); return clone(run); },

@@ -53,6 +53,20 @@ export function validatePlan(plan: Plan): void {
     if (!Number.isInteger(step.retryBudget) || step.retryBudget < 0) {
       throw new AgentDomainError("INVALID_PLAN", "Plan step retryBudget must be a non-negative integer.");
     }
+    if (step.preconditions) {
+      if (!step.preconditions.requiredState.trim()) throw new AgentDomainError("INVALID_PLAN", "Preconditions require a state.");
+    }
+    if (step.postconditions) {
+      if (step.postconditions.observableSignals.length === 0) throw new AgentDomainError("INVALID_PLAN", "Postconditions require observable signals.");
+    }
+    if (step.verification) {
+      if (step.verification.requiredSignals.length === 0 || step.verification.minimumConfidence < 0 || step.verification.minimumConfidence > 1) {
+        throw new AgentDomainError("INVALID_PLAN", "Verification requirements are invalid.");
+      }
+    }
+    if (step.recoveryPolicy && (!Number.isInteger(step.recoveryPolicy.maxRetries) || step.recoveryPolicy.maxRetries < 0)) {
+      throw new AgentDomainError("INVALID_PLAN", "Recovery maxRetries must be a non-negative integer.");
+    }
   });
 }
 
