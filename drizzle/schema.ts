@@ -296,3 +296,55 @@ export type VerificationEvidenceRow = typeof verificationEvidence.$inferSelect;
 export type VerificationRecordRow = typeof verificationRecords.$inferSelect;
 export type VerificationResultRow = typeof verificationResults.$inferSelect;
 export type VerificationAuditEventRow = typeof verificationAuditEvents.$inferSelect;
+
+
+export const recoveryPolicies = mysqlTable("recovery_policies", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  version: varchar("version", { length: 64 }).notNull(),
+  allowedStrategies: json("allowedStrategies").notNull(),
+  classificationStrategies: json("classificationStrategies").notNull(),
+  defaultStrategy: mysqlEnum("defaultStrategy", ["RETRY", "REOBSERVE", "REPLAN", "WAIT", "HUMAN_INTERVENTION", "ABORT"]).notNull(),
+  maxAttempts: int("maxAttempts").notNull(),
+  requiresHumanFor: json("requiresHumanFor").notNull(),
+  createdAt: timestamp("createdAt").notNull(),
+});
+
+export const recoveryStrategies = mysqlTable("recovery_strategies", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  classification: mysqlEnum("classification", ["TRANSIENT_FAILURE", "VERIFICATION_FAILURE", "TIMEOUT", "INTERRUPTED", "UNKNOWN_FAILURE", "UNSUPPORTED_OPERATION"]).notNull(),
+  strategy: mysqlEnum("strategy", ["RETRY", "REOBSERVE", "REPLAN", "WAIT", "HUMAN_INTERVENTION", "ABORT"]).notNull(),
+  rationale: text("rationale").notNull(),
+  delayMs: int("delayMs"),
+  createdAt: timestamp("createdAt").notNull(),
+}, (table) => ({ classificationIdx: index("recovery_strategies_classification_idx").on(table.classification) }));
+
+export const recoveryAttempts = mysqlTable("recovery_attempts", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  runId: varchar("runId", { length: 128 }).notNull(),
+  stepId: varchar("stepId", { length: 128 }).notNull(),
+  classification: mysqlEnum("classification", ["TRANSIENT_FAILURE", "VERIFICATION_FAILURE", "TIMEOUT", "INTERRUPTED", "UNKNOWN_FAILURE", "UNSUPPORTED_OPERATION"]).notNull(),
+  strategy: mysqlEnum("strategy", ["RETRY", "REOBSERVE", "REPLAN", "WAIT", "HUMAN_INTERVENTION", "ABORT"]).notNull(),
+  attemptNumber: int("attemptNumber").notNull(),
+  budgetBefore: json("budgetBefore").notNull(),
+  status: mysqlEnum("status", ["PENDING", "STARTED", "COMPLETED", "FAILED", "CANCELLED"]).notNull(),
+  reason: text("reason").notNull(),
+  createdAt: timestamp("createdAt").notNull(),
+  completedAt: timestamp("completedAt"),
+}, (table) => ({ runStepAttemptIdx: index("recovery_attempts_run_step_attempt_idx").on(table.runId, table.stepId, table.attemptNumber) }));
+
+export const recoveryAuditEvents = mysqlTable("recovery_audit_events", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  ownerId: varchar("ownerId", { length: 128 }).notNull(),
+  runId: varchar("runId", { length: 128 }).notNull(),
+  stepId: varchar("stepId", { length: 128 }).notNull(),
+  attemptId: varchar("attemptId", { length: 128 }),
+  action: mysqlEnum("action", ["RECOVERY_REQUESTED", "STRATEGY_SELECTED", "RETRY_BUDGET_CONSUMED", "RECOVERY_COMPLETED", "RECOVERY_ABORTED"]).notNull(),
+  outcome: mysqlEnum("outcome", ["SUCCESS", "DENIED", "FAILED"]).notNull(),
+  metadata: json("metadata"),
+  createdAt: timestamp("createdAt").notNull(),
+}, (table) => ({ ownerRunCreatedIdx: index("recovery_audit_owner_run_created_idx").on(table.ownerId, table.runId, table.createdAt) }));
+
+export type RecoveryPolicyRow = typeof recoveryPolicies.$inferSelect;
+export type RecoveryStrategyRow = typeof recoveryStrategies.$inferSelect;
+export type RecoveryAttemptRow = typeof recoveryAttempts.$inferSelect;
+export type RecoveryAuditEventRow = typeof recoveryAuditEvents.$inferSelect;
