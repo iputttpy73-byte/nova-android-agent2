@@ -1,0 +1,4 @@
+import type { AccessibilityActionType, AccessibilityCapabilityType } from "./domain";
+export const ACCESSIBILITY_ACTIONS: AccessibilityActionType[] = ["TAP", "LONG_PRESS", "SCROLL", "SWIPE", "INPUT_TEXT", "BACK", "HOME", "APP_SWITCH"];
+export const ACCESSIBILITY_CAPABILITIES: AccessibilityCapabilityType[] = ["OBSERVE_UI", "READ_HIERARCHY", "FIND_NODE", "PERFORM_ACTION"];
+export const ACCESSIBILITY_CAPABILITY_DEFAULTS: Record<AccessibilityCapabilityType, { status: "NOT_IMPLEMENTED"; reason: string }> = { OBSERVE_UI: { status: "NOT_IMPLEMENTED", reason: "Real Android AccessibilityService is not implemented in this phase." }, READ_HIERARCHY: { status: "NOT_IMPLEMENTED", reason: "UI hierarchy reading is not implemented in this phase." }, FIND_NODE: { status: "NOT_IMPLEMENTED", reason: "Node lookup is not implemented in this phase." }, PERFORM_ACTION: { status: "NOT_IMPLEMENTED", reason: "Device control is not implemented in this phase." } };

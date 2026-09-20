@@ -1,0 +1,10 @@
+export type AccessibilityActionType = "TAP" | "LONG_PRESS" | "SCROLL" | "SWIPE" | "INPUT_TEXT" | "BACK" | "HOME" | "APP_SWITCH";
+export type AccessibilityCapabilityType = "OBSERVE_UI" | "READ_HIERARCHY" | "FIND_NODE" | "PERFORM_ACTION";
+export type AccessibilityCapabilityStatus = "AVAILABLE" | "UNAVAILABLE" | "NOT_IMPLEMENTED";
+export type AccessibilityActionStatus = "REQUESTED" | "VALIDATED" | "DENIED" | "NOT_IMPLEMENTED";
+export type AccessibilityRedactionState = "REDACTED" | "MINIMIZED" | "RESTRICTED";
+export type AccessibilityEvent = { id: string; ownerId: string; runId: string; eventType: string; packageName?: string; nodeId?: string; payload?: Record<string, unknown>; redactionState: AccessibilityRedactionState; capturedAt: string; createdAt: string };
+export type AccessibilityNode = { id: string; ownerId: string; runId: string; eventId?: string; nodeId: string; className?: string; text?: string; contentDescription?: string; bounds?: { left: number; top: number; right: number; bottom: number }; clickable: boolean; enabled: boolean; childNodeIds: string[]; redactionState: AccessibilityRedactionState; createdAt: string };
+export type AccessibilityAction = { id: string; ownerId: string; runId: string; nodeId?: string; action: AccessibilityActionType; parameters?: Record<string, unknown>; status: AccessibilityActionStatus; reason: string; createdAt: string };
+export type AccessibilityCapability = { id: string; ownerId: string; capability: AccessibilityCapabilityType; status: AccessibilityCapabilityStatus; reason: string; checkedAt: string };
+export type AccessibilityAuditEvent = { id: string; ownerId: string; runId?: string; eventId?: string; nodeId?: string; actionId?: string; capabilityId?: string; action: "EVENT_RECORDED" | "NODE_RECORDED" | "ACTION_REQUESTED" | "ACTION_DENIED" | "CAPABILITY_CHECKED" | "RECORD_RETRIEVED"; outcome: "SUCCESS" | "DENIED" | "FAILED"; metadata?: Record<string, unknown>; createdAt: string };

@@ -445,3 +445,75 @@ export const observationAuditEvents = mysqlTable("observation_audit_events", {
 
 export type ObservationRecordRow = typeof observationRecords.$inferSelect;
 export type ObservationAuditEventRow = typeof observationAuditEvents.$inferSelect;
+
+
+export const accessibilityEvents = mysqlTable("accessibility_events", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  ownerId: varchar("ownerId", { length: 128 }).notNull(),
+  runId: varchar("runId", { length: 128 }).notNull(),
+  eventType: varchar("eventType", { length: 128 }).notNull(),
+  packageName: varchar("packageName", { length: 256 }),
+  nodeId: varchar("nodeId", { length: 512 }),
+  payload: json("payload"),
+  redactionState: mysqlEnum("redactionState", ["REDACTED", "MINIMIZED", "RESTRICTED"]).notNull(),
+  capturedAt: timestamp("capturedAt").notNull(),
+  createdAt: timestamp("createdAt").notNull(),
+}, (table) => ({ ownerRunCapturedIdx: index("accessibility_events_owner_run_captured_idx").on(table.ownerId, table.runId, table.capturedAt) }));
+
+export const accessibilityNodes = mysqlTable("accessibility_nodes", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  ownerId: varchar("ownerId", { length: 128 }).notNull(),
+  runId: varchar("runId", { length: 128 }).notNull(),
+  eventId: varchar("eventId", { length: 128 }),
+  nodeId: varchar("nodeId", { length: 512 }).notNull(),
+  className: varchar("className", { length: 512 }),
+  text: text("text"),
+  contentDescription: text("contentDescription"),
+  bounds: json("bounds"),
+  clickable: boolean("clickable").notNull(),
+  enabled: boolean("enabled").notNull(),
+  childNodeIds: json("childNodeIds").notNull(),
+  redactionState: mysqlEnum("redactionState", ["REDACTED", "MINIMIZED", "RESTRICTED"]).notNull(),
+  createdAt: timestamp("createdAt").notNull(),
+}, (table) => ({ ownerRunNodeIdx: index("accessibility_nodes_owner_run_node_idx").on(table.ownerId, table.runId, table.nodeId) }));
+
+export const accessibilityActions = mysqlTable("accessibility_actions", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  ownerId: varchar("ownerId", { length: 128 }).notNull(),
+  runId: varchar("runId", { length: 128 }).notNull(),
+  nodeId: varchar("nodeId", { length: 512 }),
+  action: mysqlEnum("action", ["TAP", "LONG_PRESS", "SCROLL", "SWIPE", "INPUT_TEXT", "BACK", "HOME", "APP_SWITCH"]).notNull(),
+  parameters: json("parameters"),
+  status: mysqlEnum("status", ["REQUESTED", "VALIDATED", "DENIED", "NOT_IMPLEMENTED"]).notNull(),
+  reason: text("reason").notNull(),
+  createdAt: timestamp("createdAt").notNull(),
+}, (table) => ({ ownerRunCreatedIdx: index("accessibility_actions_owner_run_created_idx").on(table.ownerId, table.runId, table.createdAt) }));
+
+export const accessibilityCapabilities = mysqlTable("accessibility_capabilities", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  ownerId: varchar("ownerId", { length: 128 }).notNull(),
+  capability: mysqlEnum("capability", ["OBSERVE_UI", "READ_HIERARCHY", "FIND_NODE", "PERFORM_ACTION"]).notNull(),
+  status: mysqlEnum("status", ["AVAILABLE", "UNAVAILABLE", "NOT_IMPLEMENTED"]).notNull(),
+  reason: text("reason").notNull(),
+  checkedAt: timestamp("checkedAt").notNull(),
+}, (table) => ({ ownerCapabilityIdx: index("accessibility_capabilities_owner_capability_idx").on(table.ownerId, table.capability) }));
+
+export const accessibilityAuditEvents = mysqlTable("accessibility_audit_events", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  ownerId: varchar("ownerId", { length: 128 }).notNull(),
+  runId: varchar("runId", { length: 128 }),
+  eventId: varchar("eventId", { length: 128 }),
+  nodeId: varchar("nodeId", { length: 512 }),
+  actionId: varchar("actionId", { length: 128 }),
+  capabilityId: varchar("capabilityId", { length: 128 }),
+  action: mysqlEnum("action", ["EVENT_RECORDED", "NODE_RECORDED", "ACTION_REQUESTED", "ACTION_DENIED", "CAPABILITY_CHECKED", "RECORD_RETRIEVED"]).notNull(),
+  outcome: mysqlEnum("outcome", ["SUCCESS", "DENIED", "FAILED"]).notNull(),
+  metadata: json("metadata"),
+  createdAt: timestamp("createdAt").notNull(),
+}, (table) => ({ ownerRunCreatedIdx: index("accessibility_audit_owner_run_created_idx").on(table.ownerId, table.runId, table.createdAt) }));
+
+export type AccessibilityEventRow = typeof accessibilityEvents.$inferSelect;
+export type AccessibilityNodeRow = typeof accessibilityNodes.$inferSelect;
+export type AccessibilityActionRow = typeof accessibilityActions.$inferSelect;
+export type AccessibilityCapabilityRow = typeof accessibilityCapabilities.$inferSelect;
+export type AccessibilityAuditEventRow = typeof accessibilityAuditEvents.$inferSelect;
