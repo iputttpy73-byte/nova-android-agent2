@@ -413,3 +413,35 @@ export type InterventionRequestRow = typeof interventionRequests.$inferSelect;
 export type InterventionResponseRow = typeof interventionResponses.$inferSelect;
 export type InterventionResolutionRow = typeof interventionResolutions.$inferSelect;
 export type InterventionAuditEventRow = typeof interventionAuditEvents.$inferSelect;
+
+
+export const observationRecords = mysqlTable("observation_records", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  ownerId: varchar("ownerId", { length: 128 }).notNull(),
+  runId: varchar("runId", { length: 128 }).notNull(),
+  stepId: varchar("stepId", { length: 128 }),
+  source: mysqlEnum("source", ["ACCESSIBILITY_TREE", "UI_HIERARCHY", "OCR", "SCREENSHOT", "APPLICATION_METADATA"]).notNull(),
+  status: mysqlEnum("status", ["AVAILABLE", "UNAVAILABLE"]).notNull(),
+  payloadReference: text("payloadReference"),
+  payload: json("payload"),
+  signals: json("signals").notNull(),
+  confidence: json("confidence").notNull(),
+  redactionState: mysqlEnum("redactionState", ["REDACTED", "MINIMIZED", "RESTRICTED"]).notNull(),
+  capturedAt: timestamp("capturedAt").notNull(),
+  expiresAt: timestamp("expiresAt"),
+  createdAt: timestamp("createdAt").notNull(),
+}, (table) => ({ ownerRunCapturedIdx: index("observation_records_owner_run_captured_idx").on(table.ownerId, table.runId, table.capturedAt), sourceIdx: index("observation_records_source_idx").on(table.source) }));
+
+export const observationAuditEvents = mysqlTable("observation_audit_events", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  ownerId: varchar("ownerId", { length: 128 }).notNull(),
+  runId: varchar("runId", { length: 128 }).notNull(),
+  recordId: varchar("recordId", { length: 128 }),
+  action: mysqlEnum("action", ["RECORD_REQUESTED", "RECORD_ACCEPTED", "RECORD_REJECTED", "RECORD_RETRIEVED", "RECORD_DELETED"]).notNull(),
+  outcome: mysqlEnum("outcome", ["SUCCESS", "DENIED", "FAILED"]).notNull(),
+  metadata: json("metadata"),
+  createdAt: timestamp("createdAt").notNull(),
+}, (table) => ({ ownerRunCreatedIdx: index("observation_audit_owner_run_created_idx").on(table.ownerId, table.runId, table.createdAt) }));
+
+export type ObservationRecordRow = typeof observationRecords.$inferSelect;
+export type ObservationAuditEventRow = typeof observationAuditEvents.$inferSelect;

@@ -57,6 +57,13 @@
       "when": 1789913141281,
       "tag": "0007_blushing_hulk",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1789913855156,
+      "tag": "0008_sweet_electro",
+      "breakpoints": true
     }
   ]
 }

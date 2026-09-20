@@ -1,0 +1,3 @@
+import type { ObservationSource } from "./domain";
+export const OBSERVATION_SOURCES: ObservationSource[] = ["ACCESSIBILITY_TREE", "UI_HIERARCHY", "OCR", "SCREENSHOT", "APPLICATION_METADATA"];
+export const OBSERVATION_SOURCE_CAPABILITIES: Record<ObservationSource, { implemented: false; platformDependency: string }> = { ACCESSIBILITY_TREE: { implemented: false, platformDependency: "Android AccessibilityService" }, UI_HIERARCHY: { implemented: false, platformDependency: "Android UI hierarchy access" }, OCR: { implemented: false, platformDependency: "OCR pipeline" }, SCREENSHOT: { implemented: false, platformDependency: "Android screen capture" }, APPLICATION_METADATA: { implemented: false, platformDependency: "Android application metadata bridge" } };
