@@ -227,3 +227,72 @@ export type MemoryLongTermContextRow = typeof memoryLongTermContexts.$inferSelec
 export type MemoryEntryRow = typeof memoryEntries.$inferSelect;
 export type MemoryConsentRow = typeof memoryConsents.$inferSelect;
 export type MemoryAuditEventRow = typeof memoryAuditEvents.$inferSelect;
+
+
+export const expectedPostconditions = mysqlTable("expected_postconditions", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  runId: varchar("runId", { length: 128 }).notNull(),
+  stepId: varchar("stepId", { length: 128 }).notNull(),
+  description: text("description").notNull(),
+  requiredSignals: json("requiredSignals").notNull(),
+  strategy: mysqlEnum("strategy", ["STATE_MATCH", "CONTENT_MATCH", "APP_OPEN", "USER_CONFIRMATION"]).notNull(),
+  minimumConfidence: varchar("minimumConfidence", { length: 32 }).notNull(),
+  allowedSources: json("allowedSources").notNull(),
+  createdAt: timestamp("createdAt").notNull(),
+}, (table) => ({ runStepIdx: index("expected_postconditions_run_step_idx").on(table.runId, table.stepId) }));
+
+export const verificationEvidence = mysqlTable("verification_evidence", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  runId: varchar("runId", { length: 128 }).notNull(),
+  stepId: varchar("stepId", { length: 128 }).notNull(),
+  source: mysqlEnum("source", ["ACCESSIBILITY", "APP_STATE", "OCR", "SCREENSHOT", "NOTIFICATION", "USER_CONFIRMATION", "SYSTEM"]).notNull(),
+  reference: text("reference"),
+  observedSignals: json("observedSignals").notNull(),
+  contradictedSignals: json("contradictedSignals").notNull(),
+  confidence: varchar("confidence", { length: 32 }).notNull(),
+  redactionState: mysqlEnum("redactionState", ["REDACTED", "MINIMIZED", "RESTRICTED"]).notNull(),
+  capturedAt: timestamp("capturedAt").notNull(),
+  expiresAt: timestamp("expiresAt"),
+}, (table) => ({ runStepCapturedIdx: index("verification_evidence_run_step_captured_idx").on(table.runId, table.stepId, table.capturedAt) }));
+
+export const verificationRecords = mysqlTable("verification_records", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  runId: varchar("runId", { length: 128 }).notNull(),
+  stepId: varchar("stepId", { length: 128 }).notNull(),
+  expectedPostconditionId: varchar("expectedPostconditionId", { length: 128 }).notNull(),
+  status: mysqlEnum("status", ["PASSED", "FAILED", "UNCERTAIN", "UNAVAILABLE"]).notNull(),
+  evidenceIds: json("evidenceIds").notNull(),
+  resultId: varchar("resultId", { length: 128 }),
+  policyVersion: varchar("policyVersion", { length: 64 }).notNull(),
+  createdAt: timestamp("createdAt").notNull(),
+  completedAt: timestamp("completedAt"),
+}, (table) => ({ runStepCreatedIdx: index("verification_records_run_step_created_idx").on(table.runId, table.stepId, table.createdAt) }));
+
+export const verificationResults = mysqlTable("verification_results", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  recordId: varchar("recordId", { length: 128 }).notNull(),
+  status: mysqlEnum("status", ["PASSED", "FAILED", "UNCERTAIN", "UNAVAILABLE"]).notNull(),
+  confidence: varchar("confidence", { length: 32 }).notNull(),
+  matchedSignals: json("matchedSignals").notNull(),
+  missingSignals: json("missingSignals").notNull(),
+  reason: text("reason").notNull(),
+  createdAt: timestamp("createdAt").notNull(),
+}, (table) => ({ recordCreatedIdx: index("verification_results_record_created_idx").on(table.recordId, table.createdAt) }));
+
+export const verificationAuditEvents = mysqlTable("verification_audit_events", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  ownerId: varchar("ownerId", { length: 128 }).notNull(),
+  runId: varchar("runId", { length: 128 }).notNull(),
+  stepId: varchar("stepId", { length: 128 }).notNull(),
+  recordId: varchar("recordId", { length: 128 }),
+  action: mysqlEnum("action", ["VERIFICATION_REQUESTED", "EVIDENCE_ACCEPTED", "EVIDENCE_REJECTED", "RESULT_RECORDED"]).notNull(),
+  outcome: mysqlEnum("outcome", ["SUCCESS", "DENIED", "FAILED"]).notNull(),
+  metadata: json("metadata"),
+  createdAt: timestamp("createdAt").notNull(),
+}, (table) => ({ ownerRunCreatedIdx: index("verification_audit_owner_run_created_idx").on(table.ownerId, table.runId, table.createdAt) }));
+
+export type ExpectedPostconditionRow = typeof expectedPostconditions.$inferSelect;
+export type VerificationEvidenceRow = typeof verificationEvidence.$inferSelect;
+export type VerificationRecordRow = typeof verificationRecords.$inferSelect;
+export type VerificationResultRow = typeof verificationResults.$inferSelect;
+export type VerificationAuditEventRow = typeof verificationAuditEvents.$inferSelect;

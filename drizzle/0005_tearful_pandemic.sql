@@ -1,0 +1,1 @@
+ALTER TABLE `verification_evidence` ADD `contradictedSignals` json NOT NULL;
