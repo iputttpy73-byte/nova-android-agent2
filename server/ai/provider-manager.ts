@@ -23,6 +23,7 @@ export class ProviderManager {
   }
 
   getHealth(providerId: AIProviderId): ProviderHealth | undefined { return this.health.get(providerId); }
+  listCapabilities() { return this.registry.listCapabilities(); }
   getFailures(): ProviderFailure[] { return this.failures.map((failure) => ({ ...failure })); }
 
   async complete(request: AIRequest, requirements: ProviderSelectionRequirements): Promise<AIResponse> {
