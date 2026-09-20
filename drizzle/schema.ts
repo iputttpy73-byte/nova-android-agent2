@@ -517,3 +517,77 @@ export type AccessibilityNodeRow = typeof accessibilityNodes.$inferSelect;
 export type AccessibilityActionRow = typeof accessibilityActions.$inferSelect;
 export type AccessibilityCapabilityRow = typeof accessibilityCapabilities.$inferSelect;
 export type AccessibilityAuditEventRow = typeof accessibilityAuditEvents.$inferSelect;
+
+
+export const executionPolicies = mysqlTable("execution_policies", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  version: varchar("version", { length: 64 }).notNull(),
+  allowedCapabilities: json("allowedCapabilities").notNull(),
+  requiresApproval: boolean("requiresApproval").notNull(),
+  maxDurationMs: int("maxDurationMs").notNull(),
+  enabled: boolean("enabled").notNull(),
+  createdAt: timestamp("createdAt").notNull(),
+});
+
+export const executionRequests = mysqlTable("execution_requests", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  ownerId: varchar("ownerId", { length: 128 }).notNull(),
+  runId: varchar("runId", { length: 128 }).notNull(),
+  stepId: varchar("stepId", { length: 128 }),
+  capability: mysqlEnum("capability", ["TAP", "LONG_PRESS", "SWIPE", "SCROLL", "INPUT_TEXT", "LAUNCH_APP", "BACK", "HOME", "APP_SWITCH"]).notNull(),
+  targetReference: varchar("targetReference", { length: 512 }),
+  parameters: json("parameters"),
+  policyId: varchar("policyId", { length: 128 }).notNull(),
+  status: mysqlEnum("status", ["PENDING", "ACCEPTED", "RUNNING", "COMPLETED", "FAILED", "CANCELLED", "INTERRUPTED", "NOT_IMPLEMENTED"]).notNull(),
+  reason: text("reason").notNull(),
+  requestedAt: timestamp("requestedAt").notNull(),
+  createdAt: timestamp("createdAt").notNull(),
+}, (table) => ({ ownerRunCreatedIdx: index("execution_requests_owner_run_created_idx").on(table.ownerId, table.runId, table.createdAt) }));
+
+export const executionResults = mysqlTable("execution_results", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  requestId: varchar("requestId", { length: 128 }).notNull(),
+  ownerId: varchar("ownerId", { length: 128 }).notNull(),
+  runId: varchar("runId", { length: 128 }).notNull(),
+  status: mysqlEnum("status", ["PENDING", "ACCEPTED", "RUNNING", "COMPLETED", "FAILED", "CANCELLED", "INTERRUPTED", "NOT_IMPLEMENTED"]).notNull(),
+  output: json("output"),
+  error: text("error"),
+  completedAt: timestamp("completedAt").notNull(),
+}, (table) => ({ ownerRunCompletedIdx: index("execution_results_owner_run_completed_idx").on(table.ownerId, table.runId, table.completedAt) }));
+
+export const executionStatuses = mysqlTable("execution_statuses", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  requestId: varchar("requestId", { length: 128 }).notNull(),
+  status: mysqlEnum("status", ["PENDING", "ACCEPTED", "RUNNING", "COMPLETED", "FAILED", "CANCELLED", "INTERRUPTED", "NOT_IMPLEMENTED"]).notNull(),
+  reason: text("reason").notNull(),
+  changedAt: timestamp("changedAt").notNull(),
+}, (table) => ({ requestChangedIdx: index("execution_statuses_request_changed_idx").on(table.requestId, table.changedAt) }));
+
+export const executionCapabilities = mysqlTable("execution_capabilities", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  ownerId: varchar("ownerId", { length: 128 }).notNull(),
+  capability: mysqlEnum("capability", ["TAP", "LONG_PRESS", "SWIPE", "SCROLL", "INPUT_TEXT", "LAUNCH_APP", "BACK", "HOME", "APP_SWITCH"]).notNull(),
+  status: mysqlEnum("status", ["AVAILABLE", "UNAVAILABLE", "NOT_IMPLEMENTED"]).notNull(),
+  reason: text("reason").notNull(),
+  checkedAt: timestamp("checkedAt").notNull(),
+}, (table) => ({ ownerCapabilityIdx: index("execution_capabilities_owner_capability_idx").on(table.ownerId, table.capability) }));
+
+export const executionAuditEvents = mysqlTable("execution_audit_events", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  ownerId: varchar("ownerId", { length: 128 }).notNull(),
+  runId: varchar("runId", { length: 128 }),
+  requestId: varchar("requestId", { length: 128 }),
+  resultId: varchar("resultId", { length: 128 }),
+  capabilityId: varchar("capabilityId", { length: 128 }),
+  action: mysqlEnum("action", ["REQUESTED", "REJECTED", "RESULT_RECORDED", "CAPABILITY_CHECKED", "STATUS_RECORDED"]).notNull(),
+  outcome: mysqlEnum("outcome", ["SUCCESS", "DENIED", "FAILED"]).notNull(),
+  metadata: json("metadata"),
+  createdAt: timestamp("createdAt").notNull(),
+}, (table) => ({ ownerRunCreatedIdx: index("execution_audit_owner_run_created_idx").on(table.ownerId, table.runId, table.createdAt) }));
+
+export type ExecutionPolicyRow = typeof executionPolicies.$inferSelect;
+export type ExecutionRequestRow = typeof executionRequests.$inferSelect;
+export type ExecutionResultRow = typeof executionResults.$inferSelect;
+export type ExecutionStatusRow = typeof executionStatuses.$inferSelect;
+export type ExecutionCapabilityRow = typeof executionCapabilities.$inferSelect;
+export type ExecutionAuditEventRow = typeof executionAuditEvents.$inferSelect;

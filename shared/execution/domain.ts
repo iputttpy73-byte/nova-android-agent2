@@ -1,0 +1,9 @@
+export type ExecutionStatus = "PENDING" | "ACCEPTED" | "RUNNING" | "COMPLETED" | "FAILED" | "CANCELLED" | "INTERRUPTED" | "NOT_IMPLEMENTED";
+export type ExecutionCapability = "TAP" | "LONG_PRESS" | "SWIPE" | "SCROLL" | "INPUT_TEXT" | "LAUNCH_APP" | "BACK" | "HOME" | "APP_SWITCH";
+export type ExecutionCapabilityStatus = "AVAILABLE" | "UNAVAILABLE" | "NOT_IMPLEMENTED";
+export type ExecutionRequest = { id: string; ownerId: string; runId: string; stepId?: string; capability: ExecutionCapability; targetReference?: string; parameters?: Record<string, unknown>; policyId: string; status: ExecutionStatus; reason: string; requestedAt: string; createdAt: string };
+export type ExecutionResult = { id: string; requestId: string; ownerId: string; runId: string; status: ExecutionStatus; output?: Record<string, unknown>; error?: string; completedAt: string };
+export type ExecutionStatusRecord = { id: string; requestId: string; status: ExecutionStatus; reason: string; changedAt: string };
+export type ExecutionPolicy = { id: string; version: string; allowedCapabilities: ExecutionCapability[]; requiresApproval: boolean; maxDurationMs: number; enabled: boolean; createdAt: string };
+export type ExecutionCapabilityRecord = { id: string; ownerId: string; capability: ExecutionCapability; status: ExecutionCapabilityStatus; reason: string; checkedAt: string };
+export type ExecutionAuditEvent = { id: string; ownerId: string; runId?: string; requestId?: string; resultId?: string; capabilityId?: string; action: "REQUESTED" | "REJECTED" | "RESULT_RECORDED" | "CAPABILITY_CHECKED" | "STATUS_RECORDED"; outcome: "SUCCESS" | "DENIED" | "FAILED"; metadata?: Record<string, unknown>; createdAt: string };
