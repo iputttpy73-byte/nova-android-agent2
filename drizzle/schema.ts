@@ -133,3 +133,97 @@ export const humanInterventionRequests = mysqlTable("human_intervention_requests
 export type AgentRunEventRow = typeof agentRunEvents.$inferSelect;
 export type AuditEventRow = typeof auditEvents.$inferSelect;
 export type HumanInterventionRequestRow = typeof humanInterventionRequests.$inferSelect;
+
+
+export const memoryUserProfiles = mysqlTable("memory_user_profiles", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  ownerId: varchar("ownerId", { length: 128 }).notNull().unique(),
+  displayName: varchar("displayName", { length: 255 }),
+  locale: varchar("locale", { length: 32 }),
+  timezone: varchar("timezone", { length: 64 }),
+  createdAt: timestamp("createdAt").notNull(),
+  updatedAt: timestamp("updatedAt").notNull(),
+});
+
+export const memoryPreferences = mysqlTable("memory_preferences", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  ownerId: varchar("ownerId", { length: 128 }).notNull().unique(),
+  values: json("values").notNull(),
+  consentStatus: mysqlEnum("consentStatus", ["REQUESTED", "GRANTED", "DENIED", "REVOKED", "EXPIRED"]).notNull(),
+  updatedAt: timestamp("updatedAt").notNull(),
+});
+
+export const memorySessionContexts = mysqlTable("memory_session_contexts", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  ownerId: varchar("ownerId", { length: 128 }).notNull(),
+  sessionId: varchar("sessionId", { length: 128 }).notNull(),
+  entryIds: json("entryIds").notNull(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  createdAt: timestamp("createdAt").notNull(),
+}, (table) => ({ ownerSessionIdx: index("memory_session_owner_session_idx").on(table.ownerId, table.sessionId) }));
+
+export const memoryWorkingContexts = mysqlTable("memory_working_contexts", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  ownerId: varchar("ownerId", { length: 128 }).notNull(),
+  runId: varchar("runId", { length: 128 }),
+  entryIds: json("entryIds").notNull(),
+  expiresAt: timestamp("expiresAt"),
+  createdAt: timestamp("createdAt").notNull(),
+  updatedAt: timestamp("updatedAt").notNull(),
+}, (table) => ({ ownerRunIdx: index("memory_working_owner_run_idx").on(table.ownerId, table.runId) }));
+
+export const memoryLongTermContexts = mysqlTable("memory_long_term_contexts", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  ownerId: varchar("ownerId", { length: 128 }).notNull().unique(),
+  entryIds: json("entryIds").notNull(),
+  consentStatus: mysqlEnum("consentStatus", ["REQUESTED", "GRANTED", "DENIED", "REVOKED", "EXPIRED"]).notNull(),
+  createdAt: timestamp("createdAt").notNull(),
+  updatedAt: timestamp("updatedAt").notNull(),
+});
+
+export const memoryEntries = mysqlTable("memory_entries", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  ownerId: varchar("ownerId", { length: 128 }).notNull(),
+  scope: mysqlEnum("scope", ["SESSION", "WORKING", "LONG_TERM"]).notNull(),
+  kind: mysqlEnum("kind", ["FACT", "PREFERENCE", "CONTEXT", "SUMMARY", "INSTRUCTION"]).notNull(),
+  memoryKey: varchar("memoryKey", { length: 256 }).notNull(),
+  value: text("value").notNull(),
+  source: mysqlEnum("source", ["USER_EXPLICIT", "USER_PROFILE", "SYSTEM_EXPLICIT", "AI_PROPOSAL"]).notNull(),
+  sensitivity: mysqlEnum("sensitivity", ["LOW", "MEDIUM", "HIGH", "CRITICAL"]).notNull(),
+  confidence: varchar("confidence", { length: 32 }).notNull(),
+  consentStatus: mysqlEnum("consentStatus", ["REQUESTED", "GRANTED", "DENIED", "REVOKED", "EXPIRED"]).notNull(),
+  expiresAt: timestamp("expiresAt"),
+  createdAt: timestamp("createdAt").notNull(),
+  deletedAt: timestamp("deletedAt"),
+}, (table) => ({ ownerScopeIdx: index("memory_entries_owner_scope_idx").on(table.ownerId, table.scope), ownerKeyIdx: index("memory_entries_owner_key_idx").on(table.ownerId, table.memoryKey) }));
+
+export const memoryConsents = mysqlTable("memory_consents", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  ownerId: varchar("ownerId", { length: 128 }).notNull(),
+  scope: mysqlEnum("scope", ["SESSION", "WORKING", "LONG_TERM"]).notNull(),
+  purpose: text("purpose").notNull(),
+  status: mysqlEnum("status", ["REQUESTED", "GRANTED", "DENIED", "REVOKED", "EXPIRED"]).notNull(),
+  requestedAt: timestamp("requestedAt").notNull(),
+  resolvedAt: timestamp("resolvedAt"),
+  expiresAt: timestamp("expiresAt"),
+}, (table) => ({ ownerStatusIdx: index("memory_consents_owner_status_idx").on(table.ownerId, table.status) }));
+
+export const memoryAuditEvents = mysqlTable("memory_audit_events", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  ownerId: varchar("ownerId", { length: 128 }).notNull(),
+  entryId: varchar("entryId", { length: 128 }),
+  action: mysqlEnum("action", ["WRITE_REQUESTED", "WRITE_ACCEPTED", "WRITE_DENIED", "READ_ALLOWED", "READ_DENIED", "DELETED", "CONSENT_GRANTED", "CONSENT_REVOKED"]).notNull(),
+  actor: mysqlEnum("actor", ["USER", "SYSTEM", "AI"]).notNull(),
+  outcome: mysqlEnum("outcome", ["SUCCESS", "DENIED", "FAILED"]).notNull(),
+  metadata: json("metadata"),
+  createdAt: timestamp("createdAt").notNull(),
+}, (table) => ({ ownerCreatedIdx: index("memory_audit_owner_created_idx").on(table.ownerId, table.createdAt) }));
+
+export type MemoryUserProfileRow = typeof memoryUserProfiles.$inferSelect;
+export type MemoryPreferencesRow = typeof memoryPreferences.$inferSelect;
+export type MemorySessionContextRow = typeof memorySessionContexts.$inferSelect;
+export type MemoryWorkingContextRow = typeof memoryWorkingContexts.$inferSelect;
+export type MemoryLongTermContextRow = typeof memoryLongTermContexts.$inferSelect;
+export type MemoryEntryRow = typeof memoryEntries.$inferSelect;
+export type MemoryConsentRow = typeof memoryConsents.$inferSelect;
+export type MemoryAuditEventRow = typeof memoryAuditEvents.$inferSelect;
