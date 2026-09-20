@@ -348,3 +348,68 @@ export type RecoveryPolicyRow = typeof recoveryPolicies.$inferSelect;
 export type RecoveryStrategyRow = typeof recoveryStrategies.$inferSelect;
 export type RecoveryAttemptRow = typeof recoveryAttempts.$inferSelect;
 export type RecoveryAuditEventRow = typeof recoveryAuditEvents.$inferSelect;
+
+
+export const interventionPolicies = mysqlTable("intervention_policies", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  version: varchar("version", { length: 64 }).notNull(),
+  allowedTypes: json("allowedTypes").notNull(),
+  approvalRequiredFor: json("approvalRequiredFor").notNull(),
+  allowedOutcomes: json("allowedOutcomes").notNull(),
+  defaultExpiryMs: int("defaultExpiryMs").notNull(),
+  createdAt: timestamp("createdAt").notNull(),
+});
+
+export const interventionRequests = mysqlTable("intervention_requests", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  ownerId: varchar("ownerId", { length: 128 }).notNull(),
+  runId: varchar("runId", { length: 128 }).notNull(),
+  type: mysqlEnum("type", ["APPROVAL_REQUIRED", "USER_CONFIRMATION", "CLARIFICATION_REQUIRED", "AUTHENTICATION_REQUIRED", "SECURITY_DECISION", "DEVICE_ACTION_REQUIRED", "RECOVERY_ASSISTANCE"]).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  reason: text("reason").notNull(),
+  requestedAction: text("requestedAction").notNull(),
+  risk: mysqlEnum("risk", ["LOW", "MEDIUM", "HIGH", "CRITICAL"]).notNull(),
+  status: mysqlEnum("status", ["OPEN", "RESPONDED", "RESOLVED", "EXPIRED", "CANCELLED"]).notNull(),
+  policyId: varchar("policyId", { length: 128 }).notNull(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  createdAt: timestamp("createdAt").notNull(),
+  resolvedAt: timestamp("resolvedAt"),
+}, (table) => ({ ownerRunStatusIdx: index("intervention_requests_owner_run_status_idx").on(table.ownerId, table.runId, table.status) }));
+
+export const interventionResponses = mysqlTable("intervention_responses", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  requestId: varchar("requestId", { length: 128 }).notNull(),
+  responderId: varchar("responderId", { length: 128 }).notNull(),
+  outcome: mysqlEnum("outcome", ["APPROVED", "REJECTED", "CANCELLED", "EXPIRED", "RESOLVED"]).notNull(),
+  message: text("message"),
+  submittedAt: timestamp("submittedAt").notNull(),
+}, (table) => ({ requestSubmittedIdx: index("intervention_responses_request_submitted_idx").on(table.requestId, table.submittedAt) }));
+
+export const interventionResolutions = mysqlTable("intervention_resolutions", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  requestId: varchar("requestId", { length: 128 }).notNull(),
+  responseId: varchar("responseId", { length: 128 }).notNull(),
+  outcome: mysqlEnum("outcome", ["APPROVED", "REJECTED", "CANCELLED", "EXPIRED", "RESOLVED"]).notNull(),
+  resultingRunState: varchar("resultingRunState", { length: 64 }).notNull(),
+  resolutionNote: text("resolutionNote").notNull(),
+  resolvedBy: varchar("resolvedBy", { length: 128 }).notNull(),
+  resolvedAt: timestamp("resolvedAt").notNull(),
+}, (table) => ({ requestResolvedIdx: index("intervention_resolutions_request_resolved_idx").on(table.requestId, table.resolvedAt) }));
+
+export const interventionAuditEvents = mysqlTable("intervention_audit_events", {
+  id: varchar("id", { length: 128 }).primaryKey(),
+  ownerId: varchar("ownerId", { length: 128 }).notNull(),
+  runId: varchar("runId", { length: 128 }).notNull(),
+  requestId: varchar("requestId", { length: 128 }),
+  responseId: varchar("responseId", { length: 128 }),
+  action: mysqlEnum("action", ["REQUESTED", "RESPONDED", "RESOLVED", "EXPIRED", "CANCELLED", "STATE_TRANSITION"]).notNull(),
+  outcome: mysqlEnum("outcome", ["SUCCESS", "DENIED", "FAILED"]).notNull(),
+  metadata: json("metadata"),
+  createdAt: timestamp("createdAt").notNull(),
+}, (table) => ({ ownerRunCreatedIdx: index("intervention_audit_owner_run_created_idx").on(table.ownerId, table.runId, table.createdAt) }));
+
+export type InterventionPolicyRow = typeof interventionPolicies.$inferSelect;
+export type InterventionRequestRow = typeof interventionRequests.$inferSelect;
+export type InterventionResponseRow = typeof interventionResponses.$inferSelect;
+export type InterventionResolutionRow = typeof interventionResolutions.$inferSelect;
+export type InterventionAuditEventRow = typeof interventionAuditEvents.$inferSelect;
