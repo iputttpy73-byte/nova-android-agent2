@@ -1,0 +1,4 @@
+<resources>
+  <string name="nova_accessibility_description">NOVA observes and assists with user-requested device tasks.</string>
+  <string name="nova_notification_listener_label">NOVA notification observation</string>
+</resources>
