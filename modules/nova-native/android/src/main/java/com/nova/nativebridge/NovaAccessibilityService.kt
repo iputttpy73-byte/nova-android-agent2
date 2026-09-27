@@ -12,7 +12,9 @@ import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.ByteArrayOutputStream
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -26,6 +28,9 @@ class NovaAccessibilityService : AccessibilityService() {
     @Volatile var instance: NovaAccessibilityService? = null
       private set
   }
+
+  private val nextNodeHandle = AtomicLong(1)
+  private val nodePaths = ConcurrentHashMap<Long, List<Int>>()
 
   override fun onServiceConnected() {
     super.onServiceConnected()
@@ -41,11 +46,15 @@ class NovaAccessibilityService : AccessibilityService() {
   }
 
   override fun onDestroy() {
+    nodePaths.clear()
     instance = null
     super.onDestroy()
   }
 
-  fun snapshotRoot(): Map<String, Any?>? = rootInActiveWindow?.let { serializeNode(it, 0) }
+  fun snapshotRoot(): Map<String, Any?>? {
+    nodePaths.clear()
+    return rootInActiveWindow?.let { serializeNode(it, 0, emptyList()) }
+  }
 
   fun performTap(x: Float, y: Float): Boolean {
     val path = Path().apply { moveTo(x, y) }
@@ -90,21 +99,32 @@ class NovaAccessibilityService : AccessibilityService() {
     }
   }
 
-  private fun findNodeById(node: AccessibilityNodeInfo?, id: Long): AccessibilityNodeInfo? {
-    if (node == null) return null
-    if (node.sourceNodeId == id) return node
-    for (index in 0 until node.childCount) {
-      findNodeById(node.getChild(index), id)?.let { return it }
-    }
-    return null
+  /**
+   * Returns a process-local opaque handle while retaining only a public child
+   * path. The existing numeric bridge field remains unchanged.
+   */
+  private fun registerNode(path: List<Int>): Long {
+    val handle = nextNodeHandle.getAndIncrement()
+    nodePaths[handle] = path
+    return handle
   }
 
-  private fun serializeNode(node: AccessibilityNodeInfo, depth: Int): Map<String, Any?> {
-    val children = if (depth >= 20) emptyList() else (0 until node.childCount).mapNotNull {
-      node.getChild(it)?.let { child -> serializeNode(child, depth + 1) }
+  private fun findNodeById(root: AccessibilityNodeInfo?, id: Long): AccessibilityNodeInfo? {
+    val path = nodePaths[id] ?: return null
+    var node = root ?: return null
+    for (childIndex in path) {
+      node = node.getChild(childIndex) ?: return null
+    }
+    return node
+  }
+
+  private fun serializeNode(node: AccessibilityNodeInfo, depth: Int, path: List<Int>): Map<String, Any?> {
+    val handle = registerNode(path)
+    val children = if (depth >= 20) emptyList() else (0 until node.childCount).mapNotNull { index ->
+      node.getChild(index)?.let { child -> serializeNode(child, depth + 1, path + index) }
     }
     return mapOf(
-      "id" to node.sourceNodeId,
+      "id" to handle,
       "className" to node.className?.toString(),
       "packageName" to node.packageName?.toString(),
       "text" to node.text?.toString(),

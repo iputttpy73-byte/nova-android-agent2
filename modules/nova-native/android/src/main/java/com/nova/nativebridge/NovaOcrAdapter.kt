@@ -38,4 +38,14 @@ class NovaOcrAdapter {
   fun close() {
     recognizer.close()
   }
+
+  companion object {
+    fun isAvailable(): Boolean = try {
+      val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+      recognizer.close()
+      true
+    } catch (_: Throwable) {
+      false
+    }
+  }
 }

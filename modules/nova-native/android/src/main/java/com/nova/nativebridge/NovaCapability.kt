@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.provider.Settings
+import android.speech.tts.TextToSpeech
 
 internal enum class CapabilityReason {
   NONE,
@@ -36,15 +37,15 @@ internal object NovaCapabilityInspector {
     accessibility(context),
     notificationListener(context),
     mediaProjection(context),
-    capability("OCR", true, true, true, true, CapabilityReason.NONE),
+    ocr(),
     appLaunch(context),
-    capability("FOREGROUND_SESSION", true, true, true, true, CapabilityReason.NONE),
-    capability("DEFERRED_WORK", true, true, true, true, CapabilityReason.NONE),
+    capability("FOREGROUND_SESSION", false, false, false, false, CapabilityReason.NOT_IMPLEMENTED),
+    capability("DEFERRED_WORK", false, false, false, false, CapabilityReason.NOT_IMPLEMENTED),
     capability("SPEECH_TO_TEXT", false, false, false, false, CapabilityReason.NOT_IMPLEMENTED),
-    capability("TEXT_TO_SPEECH", false, false, false, false, CapabilityReason.NOT_IMPLEMENTED),
-    capability("CAMERA", false, false, false, false, CapabilityReason.NOT_IMPLEMENTED),
-    capability("GALLERY", false, false, false, false, CapabilityReason.NOT_IMPLEMENTED),
-    capability("PHONE_CALL", false, false, false, false, CapabilityReason.NOT_IMPLEMENTED),
+    textToSpeech(context),
+    intentCapability(context, "CAMERA", Intent("android.media.action.IMAGE_CAPTURE")),
+    intentCapability(context, "GALLERY", Intent(Intent.ACTION_PICK).apply { type = "image/*" }),
+    intentCapability(context, "PHONE_CALL", Intent(Intent.ACTION_DIAL)),
   )
 
   private fun accessibility(context: Context): CapabilityStatus {
@@ -95,6 +96,45 @@ internal object NovaCapabilityInspector {
     false,
     CapabilityReason.NEEDS_USER_PERMISSION,
   )
+
+  private fun ocr(): CapabilityStatus {
+    val installed = NovaOcrAdapter.isAvailable()
+    return capability(
+      "OCR",
+      installed,
+      installed,
+      true,
+      installed,
+      if (installed) CapabilityReason.NONE else CapabilityReason.BLOCKED_BY_PLATFORM,
+    )
+  }
+
+  private fun textToSpeech(context: Context): CapabilityStatus {
+    val installed = context.packageManager.queryIntentServices(
+      Intent(TextToSpeech.Engine.INTENT_ACTION_TTS_SERVICE),
+      0,
+    ).isNotEmpty()
+    return capability(
+      "TEXT_TO_SPEECH",
+      installed,
+      installed,
+      true,
+      installed,
+      if (installed) CapabilityReason.NONE else CapabilityReason.NOT_IMPLEMENTED,
+    )
+  }
+
+  private fun intentCapability(context: Context, name: String, intent: Intent): CapabilityStatus {
+    val installed = intent.resolveActivity(context.packageManager) != null
+    return capability(
+      name,
+      installed,
+      installed,
+      true,
+      installed,
+      if (installed) CapabilityReason.NONE else CapabilityReason.NOT_IMPLEMENTED,
+    )
+  }
 
   private fun appLaunch(context: Context): CapabilityStatus = capability(
     "APP_LAUNCH",
