@@ -114,7 +114,30 @@ Production scope must contain only workflows that passed the beta gate. It must 
 
 ## 6. Critical paths
 
-### 6.1 First usable Android AI agent
+### 6.1 First APK artifact
+
+```text
+ENV-001
+→ ENV-002
+→ ENV-003
+```
+
+The first APK artifact exists when `assembleDebug` completes and the generated debug APK is present with a recorded version, path, and checksum. `ENV-004` is not required to produce the artifact, but it is required for installation and runtime validation.
+
+### 6.2 First installed APK and native smoke test
+
+```text
+ENV-001
+→ ENV-002
+→ ENV-003
+→ ENV-004
+→ MVP-001
+→ MVP-002
+```
+
+The installed APK path is complete when the APK installs on a test device and the compiled Kotlin module returns valid `getStatus()` and `getCapabilities()` responses.
+
+### 6.3 First end-to-end Android agent workflow
 
 ```text
 ENV-001
@@ -138,7 +161,7 @@ ENV-001
 
 This is the most important path. It produces one supervised, verifiable Android workflow. OCR, NotificationListenerService, MediaProjection, TTS, and background work are not on this path.
 
-### 6.2 First external AI provider integration
+### 6.4 First external AI provider integration
 
 ```text
 MVP-018
@@ -150,7 +173,7 @@ The first provider integration is complete when a real provider returns validate
 
 The provider path can be developed in parallel with Android build work, but it must not be allowed to hide an unverified Android execution path.
 
-### 6.3 First real user test
+### 6.5 First real user test
 
 ```text
 ENV-001
@@ -172,7 +195,7 @@ ENV-001
 
 The first external tester should receive a private build only after the workflow has passed repeated internal tests and the app explains Accessibility consent, supported apps, data retention, and limitations.
 
-### 6.4 Monetization readiness
+### 6.6 Monetization readiness
 
 ```text
 MVP-015
@@ -194,7 +217,19 @@ MVP-015
 
 Monetization should follow demonstrated value and controlled provider cost. Billing must not be added before quotas, privacy, entitlement enforcement, and reliable supported workflows exist.
 
-## 7. Remaining-task totals
+## 7. Completion percentages
+
+Percentages below measure **stage delivery readiness**, not the percentage of backlog rows marked complete. Completed foundation work is reflected in the estimate, while unverified Android runtime work is not treated as complete.
+
+| Stage | Estimated completion | Basis |
+|---|---:|---|
+| MVP | **35%** | Domain foundations, persistence, planning, bridge source, static checks, and Expo integration exist; APK, Android runtime, vertical slice, provider, privacy gate, and release gate remain. |
+| Public Beta | **10%** | MVP foundations can support beta work, but no supported-device matrix, repeated tester runs, beta diagnostics, quotas, or beta go/no-go evidence exists. |
+| Production Release | **5%** | Core source foundation exists, but release build, signing, security, billing, policy readiness, operations, and staged rollout remain. |
+
+Strict remaining-task completion is **0% for the listed MVP, Beta, and Production tasks**, because this backlog intentionally contains only unfinished execution tasks. The percentages above are product-stage readiness estimates, not task-count ratios.
+
+## 8. Remaining-task totals
 
 ### MVP count
 
@@ -213,7 +248,7 @@ The estimated MVP completion is **approximately 35%** when measured against the 
 
 On a strict task-count basis, **0 of the 21 MVP delivery tasks are complete**, because the backlog intentionally excludes already completed foundation work. The 35% estimate represents product readiness, not backlog completion.
 
-## 8. Top 10 tasks to execute next
+## 9. Top 10 Highest Priority Remaining Tasks
 
 | Rank | Task | Why next |
 |---:|---|---|
@@ -230,7 +265,7 @@ On a strict task-count basis, **0 of the 21 MVP delivery tasks are complete**, b
 
 In parallel, `MVP-018` may be prepared as soon as the provider choice and secret-management method are approved. It is not a substitute for the Android critical path.
 
-## 9. Delivery decision
+## 10. Delivery decision
 
 The next delivery target should be **Private MVP**, not Public Beta or Production. The team should not add more Android capabilities before the first critical path succeeds.
 
