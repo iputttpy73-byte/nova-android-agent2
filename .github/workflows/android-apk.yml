@@ -1,0 +1,114 @@
+name: Build NOVA Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.12.0"
+  ANDROID_PLATFORM: "android-36"
+  ANDROID_BUILD_TOOLS: "36.0.0"
+  ANDROID_NDK: "27.1.12297006"
+  ANDROID_CMAKE: "3.22.1"
+
+jobs:
+  build-apk:
+    name: Build debug APK
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        shell: bash
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager --install \\
+            "platform-tools" \\
+            "platforms;${ANDROID_PLATFORM}" \\
+            "build-tools;${ANDROID_BUILD_TOOLS}" \\
+            "ndk;${ANDROID_NDK}" \\
+            "cmake;${ANDROID_CMAKE}"
+
+      - name: Install JavaScript dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate JavaScript project
+        run: |
+          pnpm check
+          pnpm test
+          pnpm build
+
+      - name: Generate Android project and autolink native modules
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Verify NOVA native module discovery
+        shell: bash
+        run: |
+          npx expo-modules-autolinking resolve --platform android | tee /tmp/autolinking.txt
+          grep -q "nova-native" /tmp/autolinking.txt
+          grep -q "com.nova.nativebridge.NovaNativeModule" /tmp/autolinking.txt
+
+      - name: Build debug APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:assembleDebug --no-daemon --stacktrace
+
+      - name: Verify APK artifact
+        shell: bash
+        run: |
+          test -s android/app/build/outputs/apk/debug/app-debug.apk
+          sha256sum android/app/build/outputs/apk/debug/app-debug.apk | tee android/app/build/outputs/apk/debug/app-debug.apk.sha256
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nova-debug-apk-${{ github.sha }}
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            android/app/build/outputs/apk/debug/app-debug.apk
+            android/app/build/outputs/apk/debug/app-debug.apk.sha256
+
+      - name: Upload build diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nova-android-build-diagnostics-${{ github.run_id }}
+          if-no-files-found: ignore
+          retention-days: 7
+          path: |
+            android/build/reports/**
+            android/app/build/reports/**
+            /tmp/autolinking.txt
