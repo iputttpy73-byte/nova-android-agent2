@@ -46,7 +46,7 @@ class NovaNativeModule : Module() {
       NovaAccessibilityService.instance?.inputText(nodeId.toLong(), text) == true
     }
 
-    AsyncFunction("captureScreenshot") Coroutine {
+    AsyncFunction("captureScreenshot") Coroutine { ->
       NovaAccessibilityService.instance?.captureScreenshotBase64()
     }
 
