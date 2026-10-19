@@ -55,11 +55,11 @@ jobs:
         shell: bash
         run: |
           yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager --install \\
-            "platform-tools" \\
-            "platforms;${ANDROID_PLATFORM}" \\
-            "build-tools;${ANDROID_BUILD_TOOLS}" \\
-            "ndk;${ANDROID_NDK}" \\
+          sdkmanager --install \
+            "platform-tools" \
+            "platforms;${ANDROID_PLATFORM}" \
+            "build-tools;${ANDROID_BUILD_TOOLS}" \
+            "ndk;${ANDROID_NDK}" \
             "cmake;${ANDROID_CMAKE}"
 
       - name: Install JavaScript dependencies
