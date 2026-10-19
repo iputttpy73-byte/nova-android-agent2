@@ -4,6 +4,9 @@ apply plugin: "expo-module-gradle-plugin"
 
 android {
   namespace "com.nova.nativebridge"
+  defaultConfig {
+    versionName "1.0.0"
+  }
 }
 
 repositories {
