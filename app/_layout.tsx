@@ -5,7 +5,7 @@ import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
-import { I18nManager, Platform } from "react-native";
+import { Platform } from "react-native";
 import "@/lib/_core/nativewind-pressable";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { AgentStateProvider } from "@/lib/agent-state";
@@ -25,11 +25,6 @@ const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
 
 export const unstable_settings = { anchor: "(tabs)" };
-
-// NOVA launches in Yemeni Arabic by default. This is applied before the first
-// native render so the initial layout is right-to-left instead of flashing LTR.
-I18nManager.allowRTL(true);
-I18nManager.forceRTL(true);
 
 export default function RootLayout() {
   const initialInsets = initialWindowMetrics?.insets ?? DEFAULT_WEB_INSETS;

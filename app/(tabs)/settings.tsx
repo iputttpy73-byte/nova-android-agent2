@@ -1,5 +1,5 @@
 import { MaterialIcons } from "@expo/vector-icons";
-import { I18nManager, Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 
 import { AppHeader, SectionLabel, StatusPill, SurfaceCard } from "@/components/ui/foundation";
 import { ScreenContainer } from "@/components/screen-container";
@@ -14,7 +14,6 @@ export default function SettingsScreen() {
 
   const changeLocale = (nextLocale: "ar-YE" | "en-US") => {
     setLocale(nextLocale);
-    I18nManager.forceRTL(nextLocale === "ar-YE");
   };
 
   return (
