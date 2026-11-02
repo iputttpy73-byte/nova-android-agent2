@@ -2,7 +2,6 @@ import { View, type ViewProps } from "react-native";
 import { SafeAreaView, type Edge } from "react-native-safe-area-context";
 
 import { cn } from "@/lib/utils";
-import { useI18n } from "@/lib/i18n";
 
 export interface ScreenContainerProps extends ViewProps {
   /**
@@ -48,7 +47,6 @@ export function ScreenContainer({
   style,
   ...props
 }: ScreenContainerProps) {
-  const { isRTL } = useI18n();
   return (
     <View
       className={cn(
@@ -56,13 +54,12 @@ export function ScreenContainer({
         "bg-background",
         containerClassName
       )}
-      style={[{ direction: isRTL ? "rtl" : "ltr" }, style]}
+      style={style}
       {...props}
     >
       <SafeAreaView
         edges={edges}
         className={cn("flex-1", safeAreaClassName)}
-        style={{ direction: isRTL ? "rtl" : "ltr" }}
       >
         <View className={cn("flex-1", className)}>{children}</View>
       </SafeAreaView>
